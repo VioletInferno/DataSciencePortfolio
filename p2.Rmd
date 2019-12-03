@@ -1,7 +1,7 @@
 ---
 title: "Portfolio: Part 2"
 author: "John Higdon"
-date: "12/2/2019"
+date: "12/3/2019"
 output: html_document
 ---
 
@@ -191,6 +191,25 @@ summary(model_incomeByGdpRegion)
 ```
 
 See above.
+
+Visualizations:
+
+Pictured below are scatter plots of average gdp vs average income for both state and regional data. We can see by inspection that there is a slight, positive correlation between average gdp and income at a State level. Regional data has less data points, and thus shows a much looser correlation. We can see by checking the correlation coefficients of each that, indeed, average gdp and income at a state level has a positive correlation with a coefficient of 0.25. Regional data is less correlated with a coefficient of < 0.1. 
+
+```{r}
+# avg_gdp vs avg_income by State in Millions in dollars
+ggplot(avg_gdpAndPersonalIncomeByState, aes(x = avg_gdp, y = avg_income)) + geom_point() + geom_smooth(method=lm, se=FALSE, color="darkred")
+
+# determine correlation coefficient
+cor(avg_gdpAndPersonalIncomeByState$avg_gdp, avg_gdpAndPersonalIncomeByState$avg_income)
+
+# average gdp vs average income by Region in Millions of dollars
+ggplot(avg_gdpAndPersonalIncomeByRegion, aes(x = avg_gdp, y = avg_income)) + geom_point() + geom_smooth(method=lm, se=FALSE, color="darkred")
+
+# determine correlation coefficient
+cor(avg_gdpAndPersonalIncomeByRegion$avg_gdp, avg_gdpAndPersonalIncomeByRegion$avg_income)
+
+```
 
 Discussion:  
 
