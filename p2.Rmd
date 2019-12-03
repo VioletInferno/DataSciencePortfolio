@@ -1,0 +1,199 @@
+---
+title: "Portfolio: Part 2"
+author: "John Higdon"
+date: "12/2/2019"
+output: html_document
+---
+
+To begin, let's bring in the work completed from the first deliverable.
+
+```{r}
+library("knitr")
+purl("p1.Rmd", output = "p1.r")
+source("p1.r")
+```
+
+We are going to continue using the two data sets retrieved from the previous deliverable. In part 1 we introduced a secondary data set already which provides additional information about personal income based on state or region, and will continue to use it in order to allow the fruits of our labor to be utilized. We tidied said data to explore quarterly values from q1 2017 until q1 2019. In doing so, we hope to gain insight about whether or not GDP or Per Capita Personal Income have any influence on one another, as well as the state/region they reside in.
+
+As we discovered previously, our datasets could use a bit more cleanup. Both the gdpByState2017 and personalIncome2017 contain data for both states and regional areas in the United States. Let's split up these tables further! 
+
+Our goal is to retrieve tables for gdp by state, gdp by region, personal income by state and personal income by region. Doing so may elimate outliers discovered in our previous attempt, and will certainly provide us with more tidy data to parse through.
+
+The predictions we'd eventually like to attempt based on our tidy datasets are the following:
+
+1) Can state/region be used to predict average GDP? How about average personal income?
+2) Can average GDP be used to predict average personal income based on state or region?
+3) Conversely, can average personal income predict average GDP based on state or region?
+
+** Important: all values are measured in millions of dollars per unit.
+
+```{r}
+# Split gdp dataset into Regions and States
+gdpByRegion2017 <- gdpByState2017[-c(1:1224),]  # removes the first 1225 rows, leaving us with regional data
+gdpByState2017 <- gdpByState2017[-c(1225:1416),] # removes rows containing regional data
+
+# Split personal income dataset into Regions and States
+statePersonalIncome2017 <- personalIncome2017[-c(154:184),]  # removes rows containing regional data
+regionalPersonalIncome2017 <- personalIncome2017[-c(1:153),]  # removes the first 153 rows, leaving us with regional data. 
+regionalPersonalIncome2017 <- regionalPersonalIncome2017[-c(25:31),]  # cleans up legend at bottom of dataset which is not needed for analysis
+```
+
+Let's remove a bit more data from our personal data tables. In regards to this project, we only care about Per Capita personal income (which is the state or regions total personal income in millions of dollars divided by the total population of the state or region).
+
+```{r}
+# remove the total population and personal income. We will be focussing on Per Capita personal income
+# for this project
+statePersonalIncome2017 <- statePersonalIncome2017 %>% filter(!(LineCode=="2")) %>% filter(!(LineCode=="1"))
+regionalPersonalIncome2017 <- regionalPersonalIncome2017 %>% filter(!(LineCode=="2")) %>% filter(!(LineCode=="1"))
+```
+
+We can further clean up our datasets by removing the GeoFips column. We will keep LineCode so we can use said column to parse for information we may want to glean at another time.
+
+```{r}
+# Remove first column, which is the GeoFips portion we do not need
+gdpByState2017 <- gdpByState2017[, -c(1)]
+gdpByRegion2017 <- gdpByRegion2017[, -c(1)]
+regionalPersonalIncome2017 <- regionalPersonalIncome2017[, -c(1)]
+statePersonalIncome2017 <- statePersonalIncome2017[, -c(1)]
+```
+
+The four tables we have available for gdp by state, gdp by region, state personal income and regional personal income are now in a tidy state.
+
+We are ready to begin contemplating what kind of models we could create in order to gain insights about our data.
+
+In order to begin exploring the possibilities, let's create new dataframes that determine the average gdp or personal income for each observation.
+
+```{r}
+# Table 1: Average GDP by State
+temp_gdpByState <- tidyr::gather(gdpByState2017, quarter, avg_gdp, 4:12)
+avg_gdpByState <- aggregate(avg_gdp ~ GeoName, temp_gdpByState, mean)
+avg_gdpByState
+
+# Table 2: Average GDP by Region
+temp_gdpByRegion <- tidyr::gather(gdpByRegion2017, quarter, avg_gdp, 4:12)
+avg_gdpByRegion <- aggregate(avg_gdp ~ GeoName, temp_gdpByRegion, mean)
+avg_gdpByRegion
+
+# Table 3: Average Personal Income by State
+temp_statePersonalIncome <- tidyr::gather(statePersonalIncome2017, quarter, avg_income, 4:12)
+avg_personalIncomeByState <- aggregate(avg_income ~ GeoName, temp_statePersonalIncome, mean)
+avg_personalIncomeByState
+
+# Table 4: Average Personal Income by Region
+temp_regionalPersonalIncome <- tidyr::gather(regionalPersonalIncome2017, quarter, avg_income, 4:12)
+avg_personalIncomeByRegion <- aggregate(avg_income ~ GeoName, temp_regionalPersonalIncome, mean)
+avg_personalIncomeByRegion
+
+# Table 5: Average GDP by State Industry 
+avg_gdpByStateIndustry <- aggregate(avg_gdp ~ Description, temp_gdpByState, mean)
+avg_gdpByStateIndustry
+
+# Table 6: Average GDP by Regional Industry
+avg_gdpByRegionIndustry <- aggregate(avg_gdp ~ Description, temp_gdpByRegion, mean)
+avg_gdpByRegionIndustry
+
+# Remove temporary tables no longer needed for analysis
+rm(temp_gdpByState)
+rm(temp_gdpByRegion)
+rm(temp_statePersonalIncome)
+rm(temp_regionalPersonalIncome)
+```
+
+Let's merge the gdp by state and personal income by state tables together. First we need to clean up entries for Alaska and Hawaii in the personal income dataset as they contained an * appended to the end of their respective names.
+
+```{r}
+# remove all whitespace
+avg_personalIncomeByState$GeoName <- avg_personalIncomeByState$GeoName %>%
+                                     trimws()
+
+# and rename our observations mentioned above
+avg_personalIncomeByState$GeoName[2] <- "Alaska"
+avg_personalIncomeByState$GeoName[12] <- "Hawaii"
+```
+
+Now let's merge our datasets together! Doing so will allow us to test if there's a correlation between average GDP and personal income by state and region.
+
+```{r}
+# Table 7: Average GDP and Personal Income by State
+avg_gdpAndPersonalIncomeByState <- merge(avg_gdpByState, avg_personalIncomeByState)
+avg_gdpAndPersonalIncomeByState
+
+# Table 8: Average GDP and Personal Income by Region
+avg_gdpAndPersonalIncomeByRegion <- merge(avg_gdpByRegion, avg_personalIncomeByRegion)
+avg_gdpAndPersonalIncomeByRegion
+```
+
+Using Table 7 and 8 above, let's create simple models to glean information regarding the predictive qualities of our variables.
+
+```{r}
+# state models
+model_gdpByState <- lm(avg_gdp ~ GeoName, data = avg_gdpAndPersonalIncomeByState)
+model_incomeByState <- lm(avg_income ~ GeoName, data = avg_gdpAndPersonalIncomeByState)
+model_gdpByIncomeState <- lm(avg_gdp ~ avg_income, data = avg_gdpAndPersonalIncomeByState)
+model_incomeByGdpState <- lm(avg_income ~ avg_gdp, data = avg_gdpAndPersonalIncomeByState)
+
+# regional models
+model_gdpByRegion <- lm(avg_gdp ~ GeoName, data = avg_gdpAndPersonalIncomeByRegion)
+model_incomeByRegion <- lm(avg_income ~ GeoName, data = avg_gdpAndPersonalIncomeByRegion)
+model_gdpByIncomeRegion <- lm(avg_gdp ~ avg_income, data = avg_gdpAndPersonalIncomeByRegion)
+model_incomeByGdpRegion <- lm(avg_income ~ avg_gdp, data = avg_gdpAndPersonalIncomeByRegion)
+```
+
+We're now ready. Let's summarize each of our models using the power of R and take a close look at the p-value presented. We will go through each model one at a time and explain the results. 
+
+State Models:
+
+```{r}
+summary(model_gdpByState)
+```
+
+The p-value calculated here was "NA". Surely this is not a great predictor to further analyze.
+
+```{r}
+summary(model_incomeByState)
+```
+
+See above, similar outcome.
+
+```{r}
+summary(model_gdpByIncomeState)
+```
+
+Here we have a more interesting result. A p value of 0.07! It looks that we have an almost statistically significant correlation between gdp and income by state! It may proove worthwhile to further analyze this relationship in the results phase.
+
+```{r}
+summary(model_incomeByGdpState)
+```
+
+Similar to the above. This is expected because it is the inverse of the previous model.
+
+Regional Models:
+```{r}
+summary(model_gdpByRegion)
+```
+
+NAs calculated, not great to model.
+
+```{r}
+summary(model_incomeByRegion)
+```
+
+See above.
+
+```{r}
+summary(model_gdpByIncomeRegion)
+```
+
+A 0.86 p value was calculated, shows a weak at best possibility that gdp is affacted by personal income by region.
+
+```{r}
+summary(model_incomeByGdpRegion)
+```
+
+See above.
+
+Discussion:  
+
+We see that we can potentially use a model that predicts average gdp by average income or vice versa due to the statistical significance of a correlation being present between the two has a p value that is nearly 0.05 (we found 0.07 in the above analysis). Predicting by state or region name didn't prove to be a decent predictor of gdp or income in the above anaysis.  
+
+Possible limitations could be the size of the second data set used. Another is the statistical measure chosen, which is mean or average. Discrepencies in personal income especially can be drastically altered if wide ranges of values are accumulated in a region, area or state. If such skew is present, the median could prove a better metric to analyze.  

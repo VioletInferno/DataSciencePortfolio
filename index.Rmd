@@ -1,166 +1,27 @@
 ---
-title: 'Portfolio: Part 1'
-author: "John Higdon"
-date: "10/10/2019"
-output: html_document
+title: " " #replace the title with something short and catchy to represent your project
+subtitle: "John Higdon's Data Science Portfolio"
+output:
+  html_document:
+    df_print: paged
 ---
 
-### I) Introduction
+## Abstract
 
-The topic we will be exploring is Gross Domestic Product and Personal income in the United States. The main motive for choosing this topic was to determine if overall GDP has a significant affect on personal income. Intuitively we would expect that this is the case. Let's explore if this notion is true.
+The topic we will be exploring is Gross Domestic Product and Personal income in the United States between Quarter 1 2017 to Quarter 1 2019. The main motive for choosing this topic was to determine if overall GDP has a significant affect on recent personal income and vice versa. Intuitively we would expect that this may be the case. This project explores if this notion is true or false.
 
-### II) Identify initial data set
+### 1. Discovery and Data Preparation
 
-```{r}
-library("tidyverse")
+Here we prep our data the best we can and explore what we found using visualizations.
 
-# read in the initial datasets
-gdpByState <- read_csv("https://raw.githubusercontent.com/VioletInferno/DataSciencePortfolio/master/GDPbystate.csv")
-personalIncome <- read_csv("https://raw.githubusercontent.com/VioletInferno/DataSciencePortfolio/master/PersonalIncome.csv")
-```
+[Portfolio: Part 1](https://violetinferno.github.io/DataSciencePortfolio/p1.html)
 
-The original dataset can be obtained by navigating to the following url: https://apps.bea.gov/itable/iTable.cfm?ReqID=70&step=1#reqid=70&step=1&isuri=1 then selecting "QUARTERLY GROSS DOMESTIC PRODUCT (GDP) BY STATE" -> "GDP in current dollars (SQGDP2)" -> selecting "All Areas", "All statistics in table" and "Levels" for unit of measure -> Download -> CSV. I uploaded a copy of this dataset to the github for ease of access. I also retrieved the dataset "QUARTERLY STATE PERSONAL INCOME" -> "Personal Income, Population, Per Capita Personal Income (SQINC1)". The plan is to join these two data-sets to explore relationships between GDP and personal income. The urls to the datasets are https://raw.githubusercontent.com/VioletInferno/DataSciencePortfolio/master/GDPbystate.csv and https://raw.githubusercontent.com/VioletInferno/DataSciencePortfolio/master/PersonalIncome.csv, respectively.
+### 2. Model Planning and Building
 
+In part 2 we add another data source to our data set to glean additional information. Statistical models are built for various predictive elements to determine if the model produces statistically significant results.
 
-### III) Describe your source, using critical analysis to assess the quality (or limitations) of the data.
+[Portfolio: Part 2](https://violetinferno.github.io/DataSciencePortfolio/p2.html)
 
-The datasets were retrieved from the Bureau of Economic Analysis (bea.gov). The amount of categorical variables is technically 4, however I only believe two will be of use for our analysis. These two categorical variables are "GeoName" and "Description". The other two are "GeoFips" and "LineCode" - which appear to be a way to encode the aforementioned variables as integers which could be more efficient in parsing. The remaining variables are continous and contain the quartery GDP for a particular year.
+### 3. Results and Operationalization
 
-In an effort to tidy up our data, we are going to be analyzing the quarterly GDP and personal income from the years 2017 to quarter 1 in 2019. This could cause a limitation by only evaluating a limited range of years. As such, we will maintain the original datasets for analysis at a later time.
-
-### IV) Document your variables and describe in plain language what they mean and how they are represented
-
-The variables we will be analyzing in this report are the following:
-
-GeoName: either a state or region within the United States
-"Description" in the gdp table: description of the industry generating revenue
-"Description" in the personal income table: Population, per capita or personal income.
-qx_YYYY: the specific quarter, indicated by x (between 1 and 4), and year. We will be analyzing data from 2017 until the first quarter of 2019.
-
-### V) Document any manipulations you make to clean your data and organize it as Tidy Data as best you can prepare it for data analysis and modeling
-
-```{r}
-# cleaning up GDP By State table
-gdpByState <- gdpByState[-c(1,2,3),] # deletes the first three rows
-gdpByState <- gdpByState[-1,] # delete next row (used row to properly name variables)
-
-gdpByState2017 <- gdpByState[, -c(5:52)] # removes columns from col #5 to 52, leaving us with data from 2017-2019
-gdpByState2017 <- gdpByState2017[-c(1444:1448),] # remove superfluous information
-
-# Rename variables to be more descriptive
-colnames(gdpByState2017)[1] <- "GeoFips"
-colnames(gdpByState2017)[2] <- "GeoName"
-colnames(gdpByState2017)[3] <- "LineCode"
-colnames(gdpByState2017)[4] <- "Description"
-colnames(gdpByState2017)[5] <- "q1_2017"
-colnames(gdpByState2017)[6] <- "q2_2017"
-colnames(gdpByState2017)[7] <- "q3_2017"
-colnames(gdpByState2017)[8] <- "q4_2017"
-colnames(gdpByState2017)[9] <- "q1_2018"
-colnames(gdpByState2017)[10] <- "q2_2018"
-colnames(gdpByState2017)[11] <- "q3_2018"
-colnames(gdpByState2017)[12] <- "q4_2018"
-colnames(gdpByState2017)[13] <- "q1_2019"
-
-gdpByState2017 <- gdpByState2017[-c(1:27),] # we want to look specifically at states, remove US data.
-
-
-# cleaning up Personal Income table
-personalIncome <- personalIncome[-c(1,2,3),] # remove first three rows
-personalIncome2017 <- personalIncome[,-c(5:280)] # grab data from 2017-2019
-personalIncome2017 <- personalIncome2017[,-c(14)] # remove variable that won't be matched in gdpByState table.
-personalIncome2017 <- personalIncome2017[-1,] # remove top row which indicated names of columns.
-personalIncome2017 <- personalIncome2017[-c(1:3),] # remove US data.
-
-colnames(personalIncome2017)[1] <- "GeoFips"
-colnames(personalIncome2017)[2] <- "GeoName"
-colnames(personalIncome2017)[3] <- "LineCode"
-colnames(personalIncome2017)[4] <- "Description"
-colnames(personalIncome2017)[5] <- "q1_2017"
-colnames(personalIncome2017)[6] <- "q2_2017"
-colnames(personalIncome2017)[7] <- "q3_2017"
-colnames(personalIncome2017)[8] <- "q4_2017"
-colnames(personalIncome2017)[9] <- "q1_2018"
-colnames(personalIncome2017)[10] <- "q2_2018"
-colnames(personalIncome2017)[11] <- "q3_2018"
-colnames(personalIncome2017)[12] <- "q4_2018"
-colnames(personalIncome2017)[13] <- "q1_2019"
-
-# ensure our quarterly tables are numeric
-gdpByState2017$q1_2017 <- as.numeric(gdpByState2017$q1_2017)
-gdpByState2017$q2_2017 <- as.numeric(gdpByState2017$q2_2017)
-gdpByState2017$q3_2017 <- as.numeric(gdpByState2017$q3_2017)
-gdpByState2017$q4_2017 <- as.numeric(gdpByState2017$q4_2017)
-gdpByState2017$q1_2018 <- as.numeric(gdpByState2017$q1_2018)
-gdpByState2017$q2_2018 <- as.numeric(gdpByState2017$q2_2018)
-gdpByState2017$q3_2018 <- as.numeric(gdpByState2017$q3_2018)
-gdpByState2017$q4_2018 <- as.numeric(gdpByState2017$q4_2018)
-gdpByState2017$q1_2019 <- as.numeric(gdpByState2017$q1_2019)
-
-personalIncome2017$q1_2017 <- as.numeric(personalIncome2017$q1_2017)
-personalIncome2017$q2_2017 <- as.numeric(personalIncome2017$q2_2017)
-personalIncome2017$q3_2017 <- as.numeric(personalIncome2017$q3_2017)
-personalIncome2017$q4_2017 <- as.numeric(personalIncome2017$q4_2017)
-personalIncome2017$q1_2018 <- as.numeric(personalIncome2017$q1_2018)
-personalIncome2017$q2_2018 <- as.numeric(personalIncome2017$q2_2018)
-personalIncome2017$q3_2018 <- as.numeric(personalIncome2017$q3_2018)
-personalIncome2017$q4_2018 <- as.numeric(personalIncome2017$q4_2018)
-personalIncome2017$q1_2019 <- as.numeric(personalIncome2017$q1_2019)
-
-# ensure our categorial variables are defined as factors
-gdpByState2017$GeoName <- as.factor(gdpByState2017$GeoName)
-gdpByState2017$Description <- as.factor(gdpByState2017$Description)
-gdpByState2017$GeoFips <- as.factor(gdpByState2017$GeoFips)
-gdpByState2017$LineCode <- as.factor(gdpByState2017$LineCode)
-
-personalIncome2017$GeoName <- as.factor(personalIncome2017$GeoName)
-personalIncome2017$Description <- as.factor(personalIncome2017$Description)
-personalIncome2017$GeoFips <- as.factor(personalIncome2017$GeoFips)
-personalIncome2017$LineCode <- as.factor(personalIncome2017$LineCode)
-```
-
-- Removed the first 3 rows of the gdpByState dataset as they were empty anyway and will not be used for any anlalysis.
-- Removed the first row (after viewing it to change column names to their correct names)
-- Grabbed data from Quarter 1 2017 until Quarter 1 2019 in order to assist in tidying up our data.
-- Renamed variables.
-- Removed data for the entire US. Our study will be focussing on states and regions (as we can sum up values from the aforementioned to see the total US GDP)
-- Defined categorical variables as factors, and continuous variables as numeric.
-
-
-### VI) Summarize your data using descriptive statistics, along with visualizations
-
-```{r}
-mean(gdpByState2017$q1_2017, na.rm = TRUE)  # average GDP of all states/regions Quarter 1, 2017 in millions of dollars
-sd(gdpByState2017$q1_2017, na.rm = TRUE) # standard deviation of GDP of all states/regions Quarter 1, 2017 in millions of dollars
-median(gdpByState2017$q1_2017, na.rm = TRUE) # median GDP of all states/regions Quarter 1, 2017 in millions of dollars
-```
-
-Based on the descriptive statistics, our standard deviation indicates that there are outliers in our dataset. I believe this is because regional data is mixed within specific state data. Because of this, median is a more reasonable statistic to focus on because our average is skewed. To see the skew, we can look at a histogram.
-
-```{r}
-ggplot(gdpByState2017, aes(x = q1_2017)) + geom_histogram()
-```
-
-This shows that our data is skewed to the right, meaning most of our data is on the left side of the graph but a few larger outliers remain. As such, we have discovered a limitation in our dataset. In the next phase of the project, the plan is to tidy up the data even further.
-
-```{r}
-# boxplot of GDP by state and region
-ggplot(gdpByState2017, aes(x = GeoName, y = q1_2017, fill = GeoName)) + geom_boxplot() + theme_light() + coord_flip()
-
-# Quarter 1 2018 GDP vs Quarter 1 2017 GDP. May show a correlation
-ggplot(gdpByState2017, aes(x = q1_2017, y = q1_2018)) + geom_point()
-
-```
-
-We can see that there is a positive correlation between the first quarters of 2017 and 2018 in regards to GDP.
-
-### VII) Finally, describe what research questions you hope to explore in later phases, along with potential social & ethical implications of your work.
-
-## Research questions:  
-1) Does GDP have an affect on personal income / QOL of a population?  
-2) Do certain industries have more of an affect on personal income than others?  
-
-## Issues to be addressed:  
-What we've discovered in this initial analysis of our datasets is that there are significant outliers. This skews our current dataset which can pose problems for data analysis. A goal between now and the next project is to clean up the data further to provide better analysis for the future.
-
-
+Coming soon...
