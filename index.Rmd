@@ -1,5 +1,5 @@
 ---
-title: " " #replace the title with something short and catchy to represent your project
+title: "Exploring GDP and Personal Income."
 subtitle: "John Higdon's Data Science Portfolio"
 output:
   html_document:
