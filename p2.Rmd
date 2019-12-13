@@ -216,3 +216,5 @@ Discussion:
 We see that we can potentially use a model that predicts average gdp by average income or vice versa due to the statistical significance of a correlation being present between the two has a p value that is nearly 0.05 (we found 0.07 in the above analysis). Predicting by state or region name didn't prove to be a decent predictor of gdp or income in the above anaysis.  
 
 Possible limitations could be the size of the second data set used. Another is the statistical measure chosen, which is mean or average. Discrepencies in personal income especially can be drastically altered if wide ranges of values are accumulated in a region, area or state. If such skew is present, the median could prove a better metric to analyze.
+
+We will continue our analysis and discussion the third part of the project, located here: [Portfolio: Part 3](https://violetinferno.github.io/DataSciencePortfolio/p3.html)
