@@ -145,7 +145,7 @@ This shows that our data is skewed to the right, meaning most of our data is on 
 
 ```{r}
 # boxplot of GDP by state and region
-ggplot(gdpByState2017, aes(x = GeoName, y = q1_2017, fill = GeoName)) + geom_boxplot() + theme_light() + coord_flip()
+ggplot(gdpByState2017, aes(x = GeoName, y = q1_2017, fill = GeoName)) + geom_boxplot() + theme_light() + coord_flip()  + theme(axis.text.y=element_blank())
 
 # Quarter 1 2018 GDP vs Quarter 1 2017 GDP. May show a correlation
 ggplot(gdpByState2017, aes(x = q1_2017, y = q1_2018)) + geom_point()
@@ -163,4 +163,4 @@ We can see that there is a positive correlation between the first quarters of 20
 ## Issues to be addressed:  
 What we've discovered in this initial analysis of our datasets is that there are significant outliers. This skews our current dataset which can pose problems for data analysis. A goal between now and the next project is to clean up the data further to provide better analysis for the future.
 
-
+Update: Above issues addressed in [Portfolio: Part 2](https://violetinferno.github.io/DataSciencePortfolio/p2.html)

@@ -13,7 +13,7 @@ purl("p1.Rmd", output = "p1.r")
 source("p1.r")
 ```
 
-We are going to continue using the two data sets retrieved from the previous deliverable. In part 1 we introduced a secondary data set already which provides additional information about personal income based on state or region, and will continue to use it in order to allow the fruits of our labor to be utilized. We tidied said data to explore quarterly values from q1 2017 until q1 2019. In doing so, we hope to gain insight about whether or not GDP or Per Capita Personal Income have any influence on one another, as well as the state/region they reside in.
+We are going to continue using the two data sets retrieved from the previous deliverable. In part 1 we introduced a secondary data set already which provides additional information about personal income based on state or region, and will continue to use it in order to allow the fruits of our labor to be utilized. We tidied said data to explore quarterly values from q1 2017 until q1 2019. In doing so, we hope to gain insight about whether or not GDP or Per Capita Personal Income has any influence on one another, as well as the state/region they reside in.
 
 As we discovered previously, our datasets could use a bit more cleanup. Both the gdpByState2017 and personalIncome2017 contain data for both states and regional areas in the United States. Let's split up these tables further! 
 
@@ -211,8 +211,8 @@ cor(avg_gdpAndPersonalIncomeByRegion$avg_gdp, avg_gdpAndPersonalIncomeByRegion$a
 
 ```
 
-Discussion:  
+Discussion:
 
 We see that we can potentially use a model that predicts average gdp by average income or vice versa due to the statistical significance of a correlation being present between the two has a p value that is nearly 0.05 (we found 0.07 in the above analysis). Predicting by state or region name didn't prove to be a decent predictor of gdp or income in the above anaysis.  
 
-Possible limitations could be the size of the second data set used. Another is the statistical measure chosen, which is mean or average. Discrepencies in personal income especially can be drastically altered if wide ranges of values are accumulated in a region, area or state. If such skew is present, the median could prove a better metric to analyze.  
+Possible limitations could be the size of the second data set used. Another is the statistical measure chosen, which is mean or average. Discrepencies in personal income especially can be drastically altered if wide ranges of values are accumulated in a region, area or state. If such skew is present, the median could prove a better metric to analyze.

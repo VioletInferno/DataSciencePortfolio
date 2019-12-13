@@ -24,4 +24,6 @@ In part 2 we add another data source to our data set to glean additional informa
 
 ### 3. Results and Operationalization
 
-Coming soon...
+In part 3 we create training and testing data sets to perform cross validation on our tidied data. We also summarize our findings and discuss operationalization and social impact of the project.
+
+[Portfolio: Part 3](https://violetinferno.github.io/DataSciencePortfolio/p3.html)

@@ -1,0 +1,154 @@
+---
+title: "Portfolio: Part 3"
+author: "John Higdon"
+date: "12/9/2019"
+output: html_document
+---
+
+Before we begin, let's pull in the work from the previous two projects.
+
+```{r}
+suppressWarnings(suppressMessages(library("knitr")))
+suppressWarnings(suppressMessages(purl("p2.Rmd", output = "p2.r")))
+suppressWarnings(suppressMessages(source("p2.r")))
+```
+
+To recap, we will display a snippet of tables we have tidied and prepared for analysis in the last two phases of the project
+
+```{r}
+head(avg_gdpAndPersonalIncomeByState)
+head(avg_gdpAndPersonalIncomeByRegion)
+```
+
+Now that we've explored a few models, let's utilize the idea of cross-validation. We will split our dataset into training and testing datasets and will determine if any of the variables we have been exploring can realistically be used to predict outcomes.
+
+We will split the average GDP and personal income by state dataset into 75% training and 25% test.
+
+For the regional dataset, we will split the dataset 50/50 into training testing because there aren't many observations.
+
+```{r}
+suppressWarnings(suppressMessages(library("caret")))
+
+# Generate training and testing datasets for variables of interest regarding state and regional data.
+
+# state
+simple_selection <- createDataPartition(avg_gdpAndPersonalIncomeByState$avg_gdp, p = 0.75, list = FALSE)
+train_state <- avg_gdpAndPersonalIncomeByState[simple_selection, ]
+test_state <- avg_gdpAndPersonalIncomeByState[-simple_selection, ]
+
+# regional 
+simple_selection_reg <- createDataPartition(avg_gdpAndPersonalIncomeByRegion$avg_gdp, p = 0.5, list = FALSE)
+train_region <- avg_gdpAndPersonalIncomeByRegion[simple_selection_reg, ]
+test_region <- avg_gdpAndPersonalIncomeByRegion[-simple_selection_reg, ]
+```
+
+Now that we've split our data into training and testing datasets, we can build linear regression models based on the training sets we previously created. Let's determine if avg_gdp or avg_income can be predicted by any variables we tested.
+
+```{r}
+# state models
+model_gdpState <- lm(avg_gdp ~ avg_income, data = train_state)
+model_incomeState <- lm(avg_income ~ avg_gdp, data = train_state)
+
+# regional models
+model_gdpRegion <- lm(avg_gdp ~ avg_income, data = train_region)
+model_incomeRegion <- lm(avg_income ~ avg_gdp, data = train_region)
+```
+
+We're now ready to begin our prediction process. Let's view a summary of each linear model, then calculate the R^2, RMSE and MAE values (sourced from: http://www.sthda.com/english/articles/38-regression-model-validation/157-cross-validation-essentials-in-r/#model-performance-metrics)
+
+```{r}
+# summarize the models
+summary(model_gdpState)
+summary(model_incomeState)
+summary(model_gdpRegion)
+summary(model_incomeRegion)
+
+set.seed(111)
+
+# Calculate mean squared difference between the observed and the predicted outcome values.
+# The one that produces the lowest RMSE value is the preffered model when comparing between models.
+
+# gdp by state
+predictions_gdpState <- model_gdpState %>% predict(test_state)
+data.frame( R2 = R2(predictions_gdpState, test_state$avg_gdp),
+            RMSE = RMSE(predictions_gdpState, test_state$avg_gdp),
+            MAE = MAE(predictions_gdpState, test_state$avg_gdp))
+
+prediction_error_rate_gdpState <- RMSE(predictions_gdpState, test_state$avg_gdp)/mean(test_state$avg_gdp)
+prediction_error_rate_gdpState
+
+# income by state
+predictions_incomeState <- model_incomeState %>% predict(test_state)
+data.frame( R2 = R2(predictions_incomeState, test_state$avg_income),
+            RMSE = RMSE(predictions_incomeState, test_state$avg_income),
+            MAE = MAE(predictions_incomeState, test_state$avg_income))
+
+prediction_error_rate_incomeState <- RMSE(predictions_incomeState, test_state$avg_income)/mean(test_state$avg_income)
+prediction_error_rate_incomeState
+
+# gdp by region
+predictions_gdpRegion <- model_gdpRegion %>% predict(test_region)
+data.frame( R2 = R2(predictions_gdpRegion, test_region$avg_gdp),
+            RMSE = RMSE(predictions_gdpRegion, test_region$avg_gdp),
+            MAE = MAE(predictions_gdpRegion, test_region$avg_gdp))
+
+prediction_error_rate_gdpRegion <- RMSE(predictions_gdpRegion, test_region$avg_gdp)/mean(test_region$avg_gdp)
+prediction_error_rate_gdpRegion
+
+# income by region
+predictions_incomeRegion <- model_gdpRegion %>% predict(test_region)
+data.frame( R2 = R2(predictions_incomeRegion, test_region$avg_income),
+            RMSE = RMSE(predictions_incomeRegion, test_region$avg_income),
+            MAE = MAE(predictions_incomeRegion, test_region$avg_income))
+
+prediction_error_rate_incomeRegion <- RMSE(predictions_incomeRegion, test_region$avg_income)/mean(test_region$avg_income)
+prediction_error_rate_incomeRegion
+
+```
+
+### Discussion of Results
+
+Based on the results of our cross validation techniques; it appears that our strongest model is predicting average state gdp based on average personal income because its error rate was the lowest and it also scored the lowest RMSE value in tests conducted, which is a value we use to compare models - the model that scores the lowest is the best model for prediction.
+
+```{r}
+ggplot(avg_gdpAndPersonalIncomeByState, aes(x = avg_income, y = avg_gdp)) + geom_point() + geom_smooth(method=lm, se=FALSE, color="darkred")
+
+```
+
+By inspection we can observe a correlation between the two. During the testing phase when looking over p values and RMSE/error values generated, I witnessed a noticeable fluctuation of p and error values. If this is the case, then the model only works on a subset of the data (because results fluctuate significantly upon running tests), making it an inconsistent candidate to be chosen as a predictive model. However, the model may perform better than random chance, so it may be worth further investigation.
+
+What I found interesting, while not necessarily useful for predictive models, were the results discovered after the operations done in part 2 where we have clean and tidy tables that show the average gdp and personal income of each state and region.
+
+The top three states for average gdp are:
+
+1) California
+2) Texas 
+3) New York
+
+Top three states for average personal income:
+
+1) District of Columbia 
+2) Connecticut
+3) Massachusetts
+
+Regional gdp:
+
+1) Mideast
+2) Southeast
+3) Far West
+
+Regional personal income:
+
+1) New England
+2) Mideast
+3) Far West
+
+### Operationalization & Social Impact
+
+The findings in this report indicate that there is a model that's a potential candidate worth further researching. Average income by state and region can potentially be predicted by the average personal income per capita of the state or region. This makes sense that if the average earnings are high in a particular region or state that it would follow that more products and services would be sold and thus more revenue generated for the producers. Further data worth collecting would certainly be population of the specified areas. The population of an area may play a key role in influencing the gdp or personal income of a state or region.
+
+To automate the data collection, we could potentially develop a web scaraping utility that updates ours tables periodically.  
+
+A very naive way to operationalize this model would be to increase minimum wage substantially and evaluate if GDP is affected. Other factors worth investigating would be number of hours worked vs average personal income to see if either can be used to predict the "happiness" or "well-being" of an individual in further studies. 
+
+Unintended consequences of such an action could be the increse of costs for basic goods and services that further limits access to resources for the working class and lower. Companies may lay off more workers or move their operations to other locations/countries, displacing workers in the process. 
